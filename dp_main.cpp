@@ -1,52 +1,53 @@
-#include "dp.core.h"
+#include "dp_core.h"
+
+const int MAX_WIDTH = 4200;
+const int MAX_HEIGHT = 3500;
+unsigned char	external_wide[MAX_WIDTH*MAX_HEIGHT];
+unsigned char	external_tele[MAX_WIDTH*MAX_HEIGHT];
 
 
-void readRawImg(const char* fileName, const int& width,  const int& height, int* dst_img)
+void init_params(params_t* params)
 {
-	FILE *pFile;
-	int err = fopen_s(&pFile, fileName, "r");
-	int img_size = width*height * 2;
-	unsigned char *pBuf = (unsigned char*)malloc(sizeof(unsigned char)*img_size);
-	fread(pBuf, 1, img_size, pFile);
-	for (int i = 0; i < img_size;)
-	{
-		unsigned int lowByte = pBuf[i];
-		unsigned int hightByte = pBuf[i + 1];
-		dst_img[i / 2] = lowByte + hightByte * 256;
-		i = i + 2;
-	}
-	fclose(pFile);
-	free(pBuf);
+	const char wide_file_dir[] = "2#-12870.raw";
+	const char tele_file_dir[] = "2#-16880-10M.raw";
+	params->wide_width = 4096;
+	params->wide_height = 3072;
+	params->tele_width = 3264;
+	params->tele_height = 2448;
+	params->elem_size = 1;
+	strcpy(params->input_wide_file_name, wide_file_dir);
+	strcpy(params->input_tele_file_name, tele_file_dir);
 }
-
-void writeImg(const char* file_dir, const int& width, const int& height, const int* src_img)
-{
-	FILE* pFile;
-	int err= fopen_s(&pFile,file_dir, "w");
-	fwrite(src_img, 4, width*height, pFile);
-	fclose(pFile);
-}
-
-
 
 int main()
 {
-	const int w_width = 4096;
-	const int w_height = 3072;
-	const int t_width = 3264;
-	const int t_height = 2448;
-	const char wide_file_dir[] = "2#-12870.raw";
-	const char tele_file_dir[] = "2#-16880-10M.raw";
-	int* wide_img = (int*)malloc(sizeof(int)*w_width*w_height);
-	int* tele_img = (int*)malloc(sizeof(int)*t_width*t_height);
-	readRawImg(wide_file_dir,w_width,w_height, wide_img);
-	readRawImg(tele_file_dir, t_width, t_height, tele_img);
-	writeImg("wide.raw", w_width, w_height, wide_img);
-	writeImg("tele.raw", t_width, t_height, tele_img);
+	params_t p_params;
+	init_params(&p_params);
+	const unsigned short w_width = p_params.wide_width;
+	const unsigned short w_height = p_params.wide_height;
+	const unsigned short t_width = p_params.tele_width;
+	const unsigned short t_height = p_params.tele_height;
+	const unsigned short elem_size = p_params.elem_size;
+	frame_buf_t wide_frame;
+	frame_buf_t tele_frame;
+	frame_buf_init(&wide_frame, external_wide, w_width, w_height,elem_size);
+	frame_buf_init(&tele_frame, external_tele, t_width, t_height,elem_size);
 
+	FILE* fp1 = fopen(p_params.input_wide_file_name, "rb");
+	if (!image_read(fp1, &wide_frame)){
+		printf("can't read input file\n");
+		return 1;
+	}
+	FILE* fp2 = fopen(p_params.input_tele_file_name, "rb");
+	if (!image_read(fp1, &tele_frame)){
+		printf("can't read input file\n");
+		return 1;
+	}
 	
-	
-	free(wide_img);
-	free(tele_img);
+
+	epipolar_rectification(&wide_frame,&tele_frame);
+
+	fclose(fp1);
+	fclose(fp2);
 	return 0;
 }
