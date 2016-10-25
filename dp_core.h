@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "frame_buff.h"
+#include "frame_buf.h"
 #include "epipolar_rectification.h"
 
 

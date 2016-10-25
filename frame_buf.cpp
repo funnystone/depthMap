@@ -24,6 +24,9 @@ int image_read(FILE* fp, frame_buf_t* p_buf)
 	unsigned char* data = p_buf->data;
 	unsigned short width = p_buf->width;
 	unsigned short height = p_buf->height;
+	if (fp == NULL){
+		return false;
+	}
 	int img_size = width*height * 2;
 	unsigned char *pBuf = (unsigned char*)malloc(sizeof(unsigned char)*img_size);
 	size = fread(pBuf, 1, width *height*2, fp);
@@ -45,8 +48,9 @@ int image_write(FILE* fp, frame_buf_t* p_buf)
 	size_t size;
 	unsigned short width = p_buf->width;
 	unsigned short height = p_buf->height;
-	size=fwrite(p_buf->data, 4, width*height, fp);
-	if (size != width * height * 4) {
+	unsigned short elem_size = p_buf->elem_size;
+	size=fwrite(p_buf->data, elem_size, width*height, fp);
+	if (size != width * height * elem_size) {
 		return false;
 	}
 	return true;

@@ -1,6 +1,6 @@
 
 /*******************************************************************
-File	:	frame_buff.h
+File	:	frame_buf.h
 Desc	:	Header file for frame buffer structures definition and related function declarations
 Author	:	Lex
 Date	:	2016-10-18
